@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿# Habi Agency Copilot
 
 Service Python + FastAPI indépendant de **HabiTerra BackEnd Spring Boot** et de
@@ -364,3 +365,6 @@ python-dotenv 1.2.4. `requirements.txt` conserve ses plages de versions.
 
 La prochaine étape est la validation contre Spring Boot avec un compte de test,
 puis le raccordement contrôlé de la mémoire. L'intégration LLM reste hors périmètre.
+=======
+# Habi-Copilot
+>>>>>>> dd5dc7c90f8c352c8aafcfc028b44e81dace430f
