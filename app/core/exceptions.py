@@ -1,5 +1,42 @@
-class CopilotNotImplementedError(Exception):
-    """La fonctionnalité est réservée à une prochaine étape."""
+class CopilotError(Exception):
+    status_code = 502
+    code = "COPILOT_ERROR"
+    message = "La demande ne peut pas être traitée actuellement."
+
+    def __init__(self) -> None:
+        super().__init__(self.message)
+
+
+class LLMUnavailableError(CopilotError):
+    status_code = 503
+    code = "LLM_UNAVAILABLE"
+    message = "Le service de compréhension est indisponible. Réessayez plus tard."
+
+
+class LLMConfigurationError(LLMUnavailableError):
+    code = "LLM_NOT_CONFIGURED"
+    message = "Le service de compréhension n'est pas configuré."
+
+
+class LLMTimeoutError(CopilotError):
+    status_code = 504
+    code = "LLM_TIMEOUT"
+    message = "Le service de compréhension a dépassé le délai autorisé."
+
+
+class InvalidPlannerDecisionError(CopilotError):
+    code = "INVALID_PLANNER_DECISION"
+    message = "Je n'ai pas pu interpréter cette demande de façon fiable. Pouvez-vous la reformuler ?"
+
+
+class ConversationUnavailableError(CopilotError):
+    status_code = 404
+    code = "CONVERSATION_UNAVAILABLE"
+    message = "Conversation inaccessible ou expirée. Veuillez démarrer une nouvelle conversation."
+
+
+class ClarificationRequired(Exception):
+    """Signal interne, sans erreur réseau ni données sensibles."""
 
 
 class UnknownToolError(ValueError):

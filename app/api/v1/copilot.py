@@ -5,14 +5,13 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.clients.spring_client import require_authorization
-from app.core.exceptions import CopilotNotImplementedError, SpringUnauthorizedError
-from app.schemas.chat import ChatRequest, NotImplementedResponse
+from app.core.exceptions import SpringUnauthorizedError
+from app.schemas.chat import ChatRequest, ChatResponse
 from app.schemas.spring import (
     ApplicationDetails, ApplicationKpis, ApplicationSummary, OwnerSummary,
     PortfolioKpis, PropertyDetails, SpringPage,
 )
 from app.schemas.tools import ToolExecutionRequest
-from app.services.copilot_service import CopilotService
 
 router = APIRouter(prefix="/api/v1/copilot", tags=["copilot"])
 development_router = APIRouter(prefix="/api/v1/copilot/tools", tags=["development tools"])
@@ -22,20 +21,6 @@ bearer_header = HTTPBearer(
 )
 
 
-@router.post("/chat", status_code=501, response_model=NotImplementedResponse)
-async def chat(
-    request: ChatRequest,
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_header)],
-) -> JSONResponse:
-    # Le header est documenté, sans validation du JWT ni accès à des données.
-    # Ne jamais logger credentials ni le transmettre au LLM.
-    try:
-        await CopilotService().chat(request)
-    except CopilotNotImplementedError:
-        return JSONResponse(status_code=501, content=NotImplementedResponse().model_dump())
-    raise RuntimeError("Le contrat du chat doit être implémenté avant activation.")
-
-
 async def execution_authorization(
     request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_header)],
@@ -43,6 +28,28 @@ async def execution_authorization(
     if credentials is None or len(request.headers.getlist("authorization")) != 1:
         raise SpringUnauthorizedError()
     return require_authorization(f"Bearer {credentials.credentials}")
+
+
+@router.post("/chat", response_model=ChatResponse, responses={
+    401: {"model": ChatResponse, "description": "Authentification requise ou expirée"},
+    403: {"model": ChatResponse, "description": "Accès refusé par Spring"},
+    404: {"model": ChatResponse, "description": "Conversation ou ressource inaccessible"},
+    422: {"model": ChatResponse, "description": "Requête invalide"},
+    500: {"model": ChatResponse, "description": "Erreur interne"},
+    502: {"model": ChatResponse, "description": "Réponse externe invalide"},
+    503: {"model": ChatResponse, "description": "Service externe indisponible ou non configuré"},
+    504: {"model": ChatResponse, "description": "Délai dépassé"},
+})
+async def chat(
+    body: ChatRequest,
+    request: Request,
+    authorization: Annotated[str, Depends(execution_authorization)],
+) -> JSONResponse:
+    response, status_code = await request.app.state.copilot_service.chat(body, authorization=authorization)
+    return JSONResponse(
+        status_code=status_code, content=response.model_dump(mode="json", by_alias=True),
+        headers={"WWW-Authenticate": "Bearer"} if status_code == 401 else None,
+    )
 
 
 @development_router.post(

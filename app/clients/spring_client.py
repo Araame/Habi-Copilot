@@ -13,7 +13,7 @@ from app.core.exceptions import (
 from app.schemas.spring import (
     ApplicationDetails, ApplicationKpis, ApplicationSearch, ApplicationSummary,
     CurrentAccount, OwnerSearch, OwnerSummary, PortfolioKpis, PropertyDetails,
-    PropertySearch, SpringPage,
+    PropertySearch, PropertyTypeCatalog, SpringPage,
 )
 from app.schemas.tools import (
     GetApplicationDetailsArguments, GetApplicationKpisArguments,
@@ -34,7 +34,7 @@ def require_authorization(authorization: str) -> str:
 
 
 class SpringBootClient:
-    """Seul point de communication Spring : huit opérations et /auth/me interne."""
+    """Seul accès Spring : huit outils, identité et catalogue technique de types."""
 
     def __init__(
         self, settings: Settings, *, transport: httpx.AsyncBaseTransport | None = None
@@ -125,6 +125,12 @@ class SpringBootClient:
         """Hors registre métier. Seul id survit à la projection Pydantic."""
         return await self._request(
             "GET", "/api/v1/auth/me", CurrentAccount, authorization=authorization
+        )
+
+    async def get_property_types(self, *, authorization: str) -> PropertyTypeCatalog:
+        """Catalogue technique en lecture seule, hors registre des huit outils."""
+        return await self._request(
+            "GET", "/api/v1/property-types", PropertyTypeCatalog, authorization=authorization
         )
 
     async def _request(

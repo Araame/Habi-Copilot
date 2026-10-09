@@ -11,6 +11,16 @@ class ChatRequest(BaseModel):
     conversation_id: UUID | None = Field(default=None, alias="conversationId")
 
 
-class NotImplementedResponse(BaseModel):
-    status: Literal["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED"
-    message: str = "L'orchestration du Copilot n'est pas encore implémentée."
+class ToolCallSummary(BaseModel):
+    name: str
+
+
+class ChatResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    conversation_id: UUID | None = Field(default=None, alias="conversationId")
+    status: Literal["ANSWERED", "NEEDS_CLARIFICATION", "READ_ONLY", "UNSUPPORTED", "ERROR"]
+    answer: str
+    tool_calls: list[ToolCallSummary] = Field(default_factory=list, alias="toolCalls")
+    suggestions: list[str] = Field(default_factory=list)
+    error_code: str | None = Field(default=None, alias="errorCode")

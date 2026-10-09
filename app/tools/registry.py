@@ -29,9 +29,7 @@ class ToolRegistry:
     def list_tools(self) -> tuple[ToolDefinition, ...]:
         return tuple(self._tools.values())
 
-    async def execute_tool(
-        self, tool_name: str, arguments: dict[str, JsonValue], authorization: str
-    ) -> BaseModel:
+    def validate_arguments(self, tool_name: str, arguments: dict[str, JsonValue]) -> BaseModel:
         definition = self.get(tool_name)  # Toujours avant le réseau.
         invalid = False
         try:
@@ -44,5 +42,12 @@ class ToolRegistry:
             invalid = True
         if invalid:
             raise InvalidToolArgumentsError("Arguments invalides pour cet outil.")
+        return validated
+
+    async def execute_tool(
+        self, tool_name: str, arguments: dict[str, JsonValue], authorization: str
+    ) -> BaseModel:
+        definition = self.get(tool_name)
+        validated = self.validate_arguments(tool_name, arguments)
         require_authorization(authorization)
         return await definition.handler(validated, authorization)

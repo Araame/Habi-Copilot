@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     spring_boot_timeout_seconds: float = Field(default=5, gt=0)
     groq_api_key: SecretStr = SecretStr("")
     copilot_llm_model: str = ""
+    copilot_llm_timeout_seconds: float = Field(default=20, gt=0, le=120)
+    copilot_max_tool_calls: int = Field(default=5, ge=1, le=5)
     copilot_conversation_ttl_minutes: int = Field(default=30, gt=0)
 
 

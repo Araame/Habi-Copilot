@@ -7,7 +7,7 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Annotated, Generic, Self, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
 
 PositiveId = Annotated[int, Field(gt=0, le=9223372036854775807)]
 NonNegativeInt = Annotated[int, Field(ge=0, le=2147483647)]
@@ -230,3 +230,13 @@ class CurrentAccount(SpringModel):
     """Projection minimale de UserResponse, uniquement pour /auth/me."""
 
     id: PositiveId
+
+
+class PropertyType(SpringModel):
+    """Projection de PropertyTypeResponse(Long id, String label, String description)."""
+    id: PositiveId
+    label: str
+
+
+class PropertyTypeCatalog(RootModel[list[PropertyType]]):
+    pass

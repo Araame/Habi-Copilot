@@ -21,7 +21,8 @@ class ConversationStore(Protocol):
 class InMemoryConversationStore:
     """Mémoire par processus ; TTL fixe depuis la création, purge à chaque accès.
 
-    Usage prévu sur une seule boucle asyncio. Le store n'est pas relié au chat.
+    Usage sur une seule boucle asyncio et un worker. Conversations sérialisées
+    par ConversationService pour éviter les mises à jour concurrentes perdues.
     """
 
     def __init__(
@@ -45,7 +46,7 @@ class InMemoryConversationStore:
         self._purge(scope)
         now = self._clock()
         conversation = Conversation(
-            conversation_id=uuid4(), created_at=now, expires_at=now + self._ttl
+            conversation_id=uuid4(), principal_id=scope, created_at=now, expires_at=now + self._ttl
         )
         self._conversations[(scope, conversation.conversation_id)] = conversation
         return conversation.model_copy(deep=True)
